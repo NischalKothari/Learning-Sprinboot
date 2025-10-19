@@ -4,6 +4,8 @@ import com.LearningSpringBoot.mongoDbIntegration.entity.JournalEntry;
 import com.LearningSpringBoot.mongoDbIntegration.service.JournalEntryService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -22,21 +24,29 @@ public class JournalEntryController {
     }
 
     @PostMapping
-    public boolean createEntry(@RequestBody JournalEntry myEntry){
-        myEntry.setDate(LocalDateTime.now());
-        journalEntryService.saveEntry((myEntry));
-        return true;
+    public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry myEntry){
+        try {
+            myEntry.setDate(LocalDateTime.now());
+            journalEntryService.saveEntry((myEntry));
+            return new ResponseEntity<>(myEntry, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("/id/{myID}")
-    public JournalEntry getJournalEntryById(@PathVariable ObjectId myID){
-        return journalEntryService.findById(myID).orElse(null);
+    public ResponseEntity<JournalEntry> getJournalEntryById(@PathVariable ObjectId myID){
+        Optional<JournalEntry> journalEntry = journalEntryService.findById(myID);
+        if (journalEntry.isPresent()){
+            return new ResponseEntity<>(journalEntry.get(), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @DeleteMapping("id/{myID}")
-    public boolean deleteJournalEntryById(@PathVariable ObjectId myID){
+    public ResponseEntity<?> deleteJournalEntryById(@PathVariable ObjectId myID){
         journalEntryService.deleteById(myID);
-        return true;
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("id/{id}")
